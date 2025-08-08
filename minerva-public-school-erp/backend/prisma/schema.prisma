@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  ACCOUNTANT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+enum FeeStatus {
+  UNPAID
+  PAID
+  PARTIAL
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Student {
+  id           Int        @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  classSection String
+  rollNumber   String?    @unique
+  dateOfBirth  DateTime?
+  guardianName String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  attendance   Attendance[]
+  fees         Fee[]
+}
+
+model Attendance {
+  id        Int               @id @default(autoincrement())
+  date      DateTime
+  status    AttendanceStatus
+  student   Student           @relation(fields: [studentId], references: [id])
+  studentId Int
+
+  @@unique([date, studentId])
+}
+
+model Fee {
+  id           Int        @id @default(autoincrement())
+  amount       Decimal    @db.Decimal(10,2)
+  dueDate      DateTime
+  status       FeeStatus  @default(UNPAID)
+  paidAt       DateTime?
+  receiptNumber String?
+  student      Student    @relation(fields: [studentId], references: [id])
+  studentId    Int
+}
